@@ -451,6 +451,10 @@ typedef enum cs_insn_flags {
 	/// False: The detail operands are from the real instruction.
 	CS_INSN_FLAG_ALIAS_DETAILS = 1 << 1,
 
+	/// True: This is the last instruction in an instruction group.
+	/// False: This instruction is not the last in an instruction group.
+	CS_INSN_FLAG_GROUP_END = 1 << 2,
+
 	/// Mask for architecture specific flags.
 	CS_INSN_FLAG_ARCH_MASK = 0xfff00000,
 } cs_insn_flags;
@@ -516,6 +520,8 @@ typedef struct cs_insn {
 #define CS_INSN_FLAGS_ALL(INSN, FLAGS) (((INSN)->flags & (FLAGS)) == (FLAGS))
 /// Check if any flag is set.
 #define CS_INSN_FLAGS_ANY(INSN, FLAGS) (((INSN)->flags & (FLAGS)) != 0)
+/// Check if this instructions is the last in a group.
+#define CS_INSN_IS_GROUP_END(INSN) CS_INSN_FLAGS_ANY(insn, CS_INSN_FLAG_GROUP_END)
 
 /// Calculate the offset of a disassembled instruction in its buffer, given its position
 /// in its array of disassembled insn

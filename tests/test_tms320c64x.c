@@ -127,7 +127,7 @@ static void print_insn_detail(cs_insn *ins)
 	printf("\n");
 }
 
-static void test()
+static int test()
 {
 #define TMS320C64X_CODE "\x01\xac\x88\x40\x81\xac\x88\x43\x00\x00\x00\x00\x02\x90\x32\x96\x02\x80\x46\x9e\x05\x3c\x83\xe6\x0b\x0c\x8b\x24"
 
@@ -143,7 +143,7 @@ static void test()
 
 	uint64_t address = 0x1000;
 	cs_buffer *buffer;
-	int i;
+	int i, ret = 0;
 	size_t count;
 
 	for (i = 0; i < sizeof(platforms)/sizeof(platforms[0]); i++) {
@@ -169,6 +169,11 @@ static void test()
 			for (j = 0; j < count; j++) {
 				printf("0x%"PRIx64":\t%s\t%s\n", insn[j].address, insn[j].mnemonic, insn[j].op_str);
 				print_insn_detail(&insn[j]);
+
+				if (!CS_INSN_IS_GROUP_END(&insn[j])) {
+					printf("ERROR: Instruction group end is not set!\n");
+					ret = 1;
+				}
 			}
 			printf("0x%"PRIx64":\n", insn[j-1].address + insn[j-1].size);
 		} else {
@@ -183,11 +188,11 @@ static void test()
 		cs_buffer_free(buffer);
 		cs_close(&handle);
 	}
+
+	return ret;
 }
 
 int main()
 {
-	test();
-
-	return 0;
+	return test();
 }

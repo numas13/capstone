@@ -94,7 +94,7 @@ static void print_insn_detail(csh cs_handle, cs_insn *ins)
 	printf("\n");
 }
 
-static void test()
+static int test()
 {
 #define WASM_CODE "\x20\x00\x20\x01\x41\x20\x10\xc9\x01\x45\x0b"
 	struct platform platforms[] = {
@@ -110,7 +110,7 @@ static void test()
 	uint64_t address = 0xffff;
 	cs_buffer *buffer;
 	size_t count;
-	int i;
+	int i, ret = 0;
 
 	for (i = 0; i < sizeof(platforms)/sizeof(platforms[0]); i++) {
 		cs_err err = cs_open(platforms[i].arch, platforms[i].mode, &handle);
@@ -135,6 +135,11 @@ static void test()
 			for (j = 0; j < count; j++) {
 				printf("0x%" PRIx64 ":\t%s\t%s\n", insn[j].address, insn[j].mnemonic, insn[j].op_str);
 				print_insn_detail(handle, &insn[j]);
+
+				if (!CS_INSN_IS_GROUP_END(&insn[j])) {
+					printf("ERROR: Instruction group end is not set!\n");
+					ret = 1;
+				}
 			}
 			printf("0x%" PRIx64 ":\n", insn[j-1].address + insn[j-1].size);
 		} else {
@@ -150,11 +155,12 @@ static void test()
 		cs_buffer_free(buffer);
 		cs_close(&handle);
 	}
+
+	return ret;
 }
 
 int main()
 {
-	test();
-	return 0;
+	return test();
 }
 

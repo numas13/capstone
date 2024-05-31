@@ -109,7 +109,7 @@ static void print_insn_detail(csh cs_handle, cs_insn *ins)
 	puts("");
 }
 
-static void test()
+static int test()
 {
 #define CBPF_CODE	"\x94\x09\x00\x00\x37\x13\x03\x00" \
 			"\x87\x00\x00\x00\x00\x00\x00\x00" \
@@ -141,7 +141,7 @@ static void test()
 	};
 	uint64_t address = 0x0;
 	cs_buffer *buffer;
-	int i;
+	int i, ret = 0;
 	size_t count;
 
 	for (i = 0; i < sizeof(platforms)/sizeof(platforms[0]); i++) {
@@ -167,6 +167,11 @@ static void test()
 			for (j = 0; j < count; j++) {
 				printf("0x%" PRIx64 ":\t%s\t%s\n", insn[j].address, insn[j].mnemonic, insn[j].op_str);
 				print_insn_detail(handle, &insn[j]);
+
+				if (!CS_INSN_IS_GROUP_END(&insn[j])) {
+					printf("ERROR: Instruction group end is not set!\n");
+					ret = 1;
+				}
 			}
 		} else {
 			printf("****************\n");
@@ -179,10 +184,11 @@ static void test()
 		cs_buffer_free(buffer);
 		cs_close(&handle);
 	}
+
+	return ret;
 }
 
 int main()
 {
-	test();
-	return 0;
+	return test();
 }

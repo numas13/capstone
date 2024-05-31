@@ -189,7 +189,7 @@ static bool consistency_checks()
 	return true;
 }
 
-static void test()
+static int test()
 {
 #define M6800_CODE \
   "\x01\x09\x36\x64\x7f\x74\x10\x00\x90\x10\xA4\x10\xb6\x10\x00\x39"
@@ -323,7 +323,7 @@ static void test()
 	uint64_t address = 0x1000;
 	csh handle;
 	cs_buffer *buffer;
-	int i;
+	int i, ret = 0;
 	size_t count;
 	const char *nine_spaces = "         ";
 
@@ -372,6 +372,11 @@ static void test()
 #ifdef WITH_DETAILS
 				print_insn_detail(handle, &insn[j]);
 #endif
+
+				if (!CS_INSN_IS_GROUP_END(&insn[j])) {
+					printf("ERROR: Instruction group end is not set!\n");
+					ret = 1;
+				}
 			}
 		}
 		else {
@@ -386,11 +391,11 @@ static void test()
 		cs_buffer_free(buffer);
 		cs_close(&handle);
 	}
+
+	return ret;
 }
 
 int main()
 {
-	test();
-
-	return 0;
+	return test();
 }

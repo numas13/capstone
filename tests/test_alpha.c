@@ -60,7 +60,7 @@ static void print_insn_detail(cs_insn *ins)
 	printf("\n");
 }
 
-static void test()
+static int test()
 {
 #define ALPHA_CODE \
 	"\x02\x00\xbb\x27\x50\x7a\xbd\x23\xd0\xff\xde\x23\x00\x00\x5e\xb7"
@@ -86,7 +86,7 @@ static void test()
 
 	uint64_t address = 0x1000;
 	cs_buffer *buffer;
-	int i;
+	int i, ret = 0;
 	size_t count;
 
 	for (i = 0; i < sizeof(platforms) / sizeof(platforms[0]); i++) {
@@ -118,6 +118,11 @@ static void test()
 				       insn[j].address, insn[j].mnemonic,
 				       insn[j].op_str);
 				print_insn_detail(&insn[j]);
+
+				if (!CS_INSN_IS_GROUP_END(&insn[j])) {
+					printf("ERROR: Instruction group end is not set!\n");
+					ret = 1;
+				}
 			}
 			printf("0x%" PRIx64 ":\n",
 			       insn[j - 1].address + insn[j - 1].size);
@@ -134,11 +139,11 @@ static void test()
 		cs_buffer_free(buffer);
 		cs_close(&handle);
 	}
+
+	return ret;
 }
 
 int main()
 {
-	test();
-
-	return 0;
+	return test();
 }

@@ -358,6 +358,7 @@ CS_OPT_SYNTAX_CS_REG_ALIAS = 1 << 7  # Prints common register alias which are no
 # Instruction flags
 CS_INSN_FLAG_ALIAS = 1 << 0
 CS_INSN_FLAG_ALIAS_DETAIL = 1 << 1
+CS_INSN_FLAG_GROUP_END = 1 << 2
 CS_INSN_FLAG_ARCH_MASK = 0xfff00000
 
 # Capstone error type

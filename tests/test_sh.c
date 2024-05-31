@@ -160,7 +160,7 @@ static bool consistency_checks()
 	return true;
 }
 
-static void test()
+static int test()
 {
 #define SH4A_CODE \
   "\x0c\x31\x10\x20\x22\x21\x36\x64\x46\x25\x12\x12\x1c\x02\x08\xc1\x05\xc7\x0c" \
@@ -189,7 +189,7 @@ static void test()
 	uint64_t address = 0x80000000;
 	csh handle;
 	cs_buffer *buffer;
-	int i;
+	int i, ret = 0;
 	size_t count;
 
 	if (!consistency_checks())
@@ -228,6 +228,11 @@ static void test()
 #ifdef WITH_DETAILS
 				print_insn_detail(handle, &insn[j]);
 #endif
+
+				if (!CS_INSN_IS_GROUP_END(&insn[j])) {
+					printf("ERROR: Instruction group end is not set!\n");
+					ret = 1;
+				}
 			}
 			printf("0x%" PRIx64 ":\n", insn[j-1].address + insn[j-1].size);
 		}
@@ -243,11 +248,11 @@ static void test()
 		cs_buffer_free(buffer);
 		cs_close(&handle);
 	}
+
+	return ret;
 }
 
 int main()
 {
-	test();
-
-	return 0;
+	return test();
 }

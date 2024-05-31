@@ -38,7 +38,7 @@ static size_t CAPSTONE_API mycallback(const uint8_t *buffer, size_t buffer_size,
 }
 #endif
 
-static void test()
+static int test()
 {
 #ifdef CAPSTONE_HAS_X86
 #define X86_CODE32 "\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92"
@@ -106,7 +106,7 @@ static void test()
 	uint64_t address = 0x1000;
 	cs_buffer *buffer;
 	cs_err err;
-	int i;
+	int i, ret = 0;
 	size_t count;
 
 	for (i = 0; i < sizeof(platforms)/sizeof(platforms[0]); i++) {
@@ -137,6 +137,11 @@ static void test()
 			for (j = 0; j < count; j++) {
 				printf("0x%" PRIx64 ":\t%s\t\t%s\n",
 						insn[j].address, insn[j].mnemonic, insn[j].op_str);
+
+				if (!CS_INSN_IS_GROUP_END(&insn[j])) {
+					printf("ERROR: Instruction group end is not set!\n");
+					ret = 1;
+				}
 			}
 
 			// print out the next offset, after the last insn
@@ -154,11 +159,13 @@ static void test()
 		cs_buffer_free(buffer);
 		cs_close(&handle);
 	}
+
+	return ret;
 }
 
 int main()
 {
-	test();
+	int ret = test();
 
 #if 0
 	#define offsetof(st, m) __builtin_offsetof(st, m)
@@ -180,5 +187,5 @@ int main()
 	printf("@arch: %lu\n", offsetof(cs_insn, x86));
 #endif
 
-	return 0;
+	return ret;
 }

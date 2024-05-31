@@ -16,6 +16,7 @@ cdef extern from "<capstone/capstone.h>":
     ctypedef enum cs_insn_flags:
         is_alias "CS_INSN_FLAG_ALIAS" = 1 << 0
         usesAliasDetails "CS_INSN_FLAG_ALIAS_DETAILS" = 1 << 1
+        is_group_end "CS_INSN_FLAG_GROUP_END" = 1 << 2
         archMask "CS_INSN_FLAG_ARCH_MASK" = 0xfff00000
 
     ctypedef struct cs_detail:

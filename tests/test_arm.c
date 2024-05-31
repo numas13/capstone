@@ -223,7 +223,7 @@ static void print_insn_detail(csh cs_handle, cs_insn *ins)
 	printf("\n");
 }
 
-static void test()
+static int test()
 {
 #define ARM_CODE "\x86\x48\x60\xf4\x4d\x0f\xe2\xf4\xED\xFF\xFF\xEB\x04\xe0\x2d\xe5\x00\x00\x00\x00\xe0\x83\x22\xe5\xf1\x02\x03\x0e\x00\x00\xa0\xe3\x02\x30\xc1\xe7\x00\x00\x53\xe3\x00\x02\x01\xf1\x05\x40\xd0\xe8\xf4\x80\x00\x00"
 #define ARM_CODE2 "\xd1\xe8\x00\xf0\xf0\x24\x04\x07\x1f\x3c\xf2\xc0\x00\x00\x4f\xf0\x00\x01\x46\x6c"
@@ -280,7 +280,7 @@ static void test()
 
 	uint64_t address = 0x80001000;
 	cs_buffer *buffer;
-	int i;
+	int i, ret = 0;
 	size_t count;
 
 	for (i = 0; i < sizeof(platforms)/sizeof(platforms[0]); i++) {
@@ -309,6 +309,11 @@ static void test()
 			for (j = 0; j < count; j++) {
 				printf("0x%" PRIx64 ":\t%s\t%s\n", insn[j].address, insn[j].mnemonic, insn[j].op_str);
 				print_insn_detail(handle, &insn[j]);
+
+				if (!CS_INSN_IS_GROUP_END(&insn[j])) {
+					printf("ERROR: Instruction group end is not set!\n");
+					ret = 1;
+				}
 			}
 			printf("0x%" PRIx64 ":\n", insn[j-1].address + insn[j-1].size);
 		} else {
@@ -324,12 +329,12 @@ static void test()
 		cs_buffer_free(buffer);
 		cs_close(&handle);
 	}
+
+	return ret;
 }
 
 int main()
 {
-	test();
-
-	return 0;
+	return test();
 }
 

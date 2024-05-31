@@ -71,7 +71,7 @@ static void print_insn_detail(cs_insn *ins)
 	printf("\n");
 }
 
-static void test()
+static int test()
 {
 //#define TRICORE_CODE "\x16\x01\x20\x01\x1d\x00\x02\x00\x8f\x70\x00\x11\x40\xae\x89\xee\x04\x09\x42\xf2\xe2\xf2\xc2\x11\x19\xff\xc0\x70\x19\xff\x20\x10"
 #define TRICORE_CODE \
@@ -89,7 +89,7 @@ static void test()
 
 	uint64_t address = 0x1000;
 	cs_buffer *buffer;
-	int i;
+	int i, ret = 0;
 	size_t count;
 
 	for (i = 0; i < sizeof(platforms) / sizeof(platforms[0]); i++) {
@@ -121,6 +121,11 @@ static void test()
 				       insn[j].address, insn[j].mnemonic,
 				       insn[j].op_str);
 				print_insn_detail(&insn[j]);
+
+				if (!CS_INSN_IS_GROUP_END(&insn[j])) {
+					printf("ERROR: Instruction group end is not set!\n");
+					ret = 1;
+				}
 			}
 			printf("0x%" PRIx64 ":\n",
 			       insn[j - 1].address + insn[j - 1].size);
@@ -135,11 +140,11 @@ static void test()
 		cs_buffer_free(buffer);
 		cs_close(&handle);
 	}
+
+	return ret;
 }
 
 int main()
 {
-	test();
-
-	return 0;
+	return test();
 }

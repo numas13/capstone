@@ -1284,6 +1284,7 @@ size_t CAPSTONE_API cs_disasm(csh ud, const uint8_t *code, size_t code_size,
 			insn->detail = NULL;
 		}
 
+		insn->flags |= CS_INSN_FLAG_GROUP_END;
 		// save all the information for non-detailed mode
 		insn->address = address;
 #ifdef CAPSTONE_DIET
