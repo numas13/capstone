@@ -132,6 +132,7 @@ struct MCInst {
 	bool isAliasInstr; // Flag if this MCInst is an alias.
 	bool fillDetailOps; // If set, detail->operands gets filled.
 	hppa_ext hppa_ext;	///< for HPPA operand. Contains info about modifiers and their effect on the instruction
+	void *buffer_private; /// cs_buffer.private data
 };
 
 void MCInst_Init(MCInst *inst);

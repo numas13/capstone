@@ -117,4 +117,10 @@ extern cs_vsnprintf_t cs_vsnprintf;
 		(INSN)->flags &= ~(FLAGS); \
 	}
 
+typedef struct cs_buffer_private {
+	// XXX: e2k testing...
+	uint16_t e2k_insn_count;
+	uint16_t e2k_insn_index;
+} cs_buffer_private;
+
 #endif

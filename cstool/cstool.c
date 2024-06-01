@@ -122,6 +122,10 @@ static struct {
 	{ "hppa20be", CS_ARCH_HPPA, CS_MODE_HPPA_20 | CS_MODE_BIG_ENDIAN },
 	{ "hppa20w", CS_ARCH_HPPA, CS_MODE_HPPA_20W | CS_MODE_LITTLE_ENDIAN },
 	{ "hppa20wbe", CS_ARCH_HPPA, CS_MODE_HPPA_20W | CS_MODE_BIG_ENDIAN },
+	{ "e2k", CS_ARCH_E2K, CS_MODE_E2K64 | CS_MODE_LITTLE_ENDIAN },
+	{ "e2k32", CS_ARCH_E2K, CS_MODE_E2K32 | CS_MODE_LITTLE_ENDIAN },
+	{ "e2k64", CS_ARCH_E2K, CS_MODE_E2K64 | CS_MODE_LITTLE_ENDIAN },
+	{ "e2k64pm", CS_ARCH_E2K, CS_MODE_E2K64_PM | CS_MODE_LITTLE_ENDIAN },
 	{ NULL }
 };
 
@@ -342,6 +346,13 @@ static void usage(char *prog)
 		printf("        tc162       tricore V1.6.2\n");
 	}
 
+	if (cs_support(CS_ARCH_E2K)) {
+		printf("        e2k           e2k (64-bit)\n");
+		printf("        e2k32         e2k (32-bit)\n");
+		printf("        e2k64         e2k (64-bit)\n");
+		printf("        e2k64pm       e2k (64-bit, protected mode)\n");
+	}
+
 	printf("\nExtra options:\n");
 	printf("        -d show detailed information of the instructions\n");
 	printf("        -r show detailed information of the real instructions (even for alias)\n");
@@ -419,6 +430,9 @@ static void print_details(csh handle, cs_arch arch, cs_mode md, cs_insn *ins)
 			break;
 		case CS_ARCH_HPPA:
 			print_insn_detail_hppa(handle, ins);
+			break;
+		case CS_ARCH_E2K:
+			print_insn_detail_e2k(handle, ins);
 			break;
 		default: break;
 	}
@@ -563,6 +577,10 @@ int main(int argc, char **argv)
 				
 				if (cs_support(CS_ARCH_HPPA)) {
 					printf("hppa=1 ");
+				}
+
+				if (cs_support(CS_ARCH_E2K)) {
+					printf("e2k=1 ");
 				}
 
 				printf("\n");

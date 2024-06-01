@@ -72,6 +72,7 @@
 #include "arch/TriCore/TriCoreModule.h"
 #include "arch/Alpha/AlphaModule.h"
 #include "arch/HPPA/HPPAModule.h"
+#include "arch/E2K/E2KModule.h"
 
 typedef struct cs_arch_config {
 	// constructor initialization
@@ -209,6 +210,12 @@ typedef struct cs_arch_config {
 		ALPHA_option, \
 		~(CS_MODE_LITTLE_ENDIAN | CS_MODE_BIG_ENDIAN), \
 	}
+#define CS_ARCH_CONFIG_E2K \
+	{ \
+		E2K_global_init, \
+		E2K_option, \
+		~(CS_MODE_LITTLE_ENDIAN | CS_MODE_E2K32 | CS_MODE_E2K64 | CS_MODE_E2K64_PM), \
+	}
 
 #ifdef CAPSTONE_USE_ARCH_REGISTRATION
 static cs_arch_config arch_configs[MAX_ARCH];
@@ -320,6 +327,11 @@ static const cs_arch_config arch_configs[MAX_ARCH] = {
 #else
 	{ NULL, NULL, 0 },
 #endif
+#ifdef CAPSTONE_HAS_E2K
+	CS_ARCH_CONFIG_E2K,
+#else
+	{ NULL, NULL, 0 },
+#endif
 };
 
 // bitmask of enabled architectures
@@ -383,6 +395,9 @@ static const uint32_t all_arch = 0
 #endif
 #ifdef CAPSTONE_HAS_HPPA
 	| (1 << CS_ARCH_HPPA)
+#endif
+#ifdef CAPSTONE_HAS_E2K
+	| (1 << CS_ARCH_E2K)
 #endif
 ;
 #endif
@@ -617,7 +632,8 @@ bool CAPSTONE_API cs_support(int query)
 				    (1 << CS_ARCH_RISCV) | (1 << CS_ARCH_MOS65XX)    |
 				    (1 << CS_ARCH_WASM)  | (1 << CS_ARCH_BPF)        |
 				    (1 << CS_ARCH_SH)    | (1 << CS_ARCH_TRICORE)    |
-					(1 << CS_ARCH_ALPHA) | (1 << CS_ARCH_HPPA));
+				    (1 << CS_ARCH_ALPHA) | (1 << CS_ARCH_HPPA)       |
+				    (1 << CS_ARCH_E2K));
 
 	if ((unsigned int)query < CS_ARCH_MAX)
 		return all_arch & (1 << query);
@@ -986,6 +1002,9 @@ static uint8_t skipdata_size(cs_struct *handle)
 		case CS_ARCH_HPPA:
 			// Hppa alignment is 4.
 			return 4;
+		case CS_ARCH_E2K:
+			// E2K alignment is 8.
+			return 8;
 	}
 }
 
@@ -1124,8 +1143,11 @@ cs_buffer * CAPSTONE_API cs_buffer_new(size_t capacity) {
 	if (!buffer) {
 		return NULL;
 	}
-	// NOTE: private is not used right now
-	buffer->private = NULL;
+	buffer->private = cs_mem_calloc(sizeof(cs_buffer_private), 1);
+	if (!buffer->private) {
+		cs_mem_free(buffer);
+		return NULL;
+	}
 	buffer->count = 0;
 	buffer->capacity = capacity ? capacity : 64;
 	buffer->insn = cs_mem_calloc(sizeof(cs_insn), buffer->capacity);
@@ -1142,12 +1164,18 @@ void CAPSTONE_API cs_buffer_free(cs_buffer *buffer) {
 		cs_insn_free(&buffer->insn[i]);
 	}
 	cs_mem_free(buffer->insn);
+	cs_mem_free(buffer->private);
 	cs_mem_free(buffer);
+}
+
+static void cs_buffer_reset(cs_buffer *buffer) {
+	buffer->count = 0;
 }
 
 CAPSTONE_EXPORT
 void CAPSTONE_API cs_buffer_clear(cs_buffer *buffer) {
-	buffer->count = 0;
+	memset(buffer->private, 0, sizeof(cs_buffer_private));
+	cs_buffer_reset(buffer);
 }
 
 CAPSTONE_EXPORT
@@ -1255,7 +1283,7 @@ size_t CAPSTONE_API cs_disasm(csh ud, const uint8_t *code, size_t code_size,
 
 	handle->errnum = CS_ERR_OK;
 
-	cs_buffer_clear(buffer);
+	cs_buffer_reset(buffer);
 
 	// save the original offset for SKIPDATA
 	code_org = code;
@@ -1271,6 +1299,7 @@ size_t CAPSTONE_API cs_disasm(csh ud, const uint8_t *code, size_t code_size,
 
 		MCInst_Init(&mci);
 		mci.csh = handle;
+		mci.buffer_private = buffer->private;
 		mci.flat_insn = insn = &buffer->insn[buffer->count];
 		// relative branches need to know the address & size of current insn
 		mci.address = address;
@@ -1625,6 +1654,11 @@ int CAPSTONE_API cs_op_count(csh ud, const cs_insn *insn, unsigned int op_type)
 				if (insn->detail->hppa.operands[i].type == (hppa_op_type)op_type)
 					count++;
 			break;
+		case CS_ARCH_E2K:
+			for (i = 0; i < insn->detail->e2k.op_count; i++)
+				if (insn->detail->e2k.operands[i].type == (e2k_op_type)op_type)
+					count++;
+			break;
 	}
 
 	return count;
@@ -1819,6 +1853,14 @@ int CAPSTONE_API cs_op_index(csh ud, const cs_insn *insn, unsigned int op_type,
 		case CS_ARCH_HPPA:
 			for (i = 0; i < insn->detail->hppa.op_count; i++) {
 				if (insn->detail->hppa.operands[i].type == (hppa_op_type)op_type)
+					count++;
+				if (count == post)
+					return i;
+			}
+			break;
+		case CS_ARCH_E2K:
+			for (i = 0; i < insn->detail->e2k.op_count; i++) {
+				if (insn->detail->e2k.operands[i].type == (e2k_op_type)op_type)
 					count++;
 				if (count == post)
 					return i;

@@ -81,8 +81,8 @@ if(APPLE AND NOT CAPSTONE_BUILD_MACOS_THIN)
     set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
 endif()
 
-set(SUPPORTED_ARCHITECTURES ARM AARCH64 M68K MIPS PPC SPARC SYSZ XCORE X86 TMS320C64X M680X EVM MOS65XX WASM BPF RISCV SH TRICORE ALPHA HPPA)
-set(SUPPORTED_ARCHITECTURE_LABELS ARM AARCH64 M68K MIPS PowerPC Sparc SystemZ XCore x86 TMS320C64x M680x EVM MOS65XX WASM BPF RISCV SH TriCore Alpha HPPA)
+set(SUPPORTED_ARCHITECTURES ARM AARCH64 M68K MIPS PPC SPARC SYSZ XCORE X86 TMS320C64X M680X EVM MOS65XX WASM BPF RISCV SH TRICORE ALPHA HPPA E2K)
+set(SUPPORTED_ARCHITECTURE_LABELS ARM AARCH64 M68K MIPS PowerPC Sparc SystemZ XCore x86 TMS320C64x M680x EVM MOS65XX WASM BPF RISCV SH TriCore Alpha HPPA E2K)
 
 list(LENGTH SUPPORTED_ARCHITECTURES count)
 math(EXPR count "${count}-1")
@@ -188,6 +188,7 @@ set(HEADERS_COMMON
     include/capstone/sh.h
     include/capstone/alpha.h
     include/capstone/hppa.h
+    include/capstone/e2k.h
 )
 
 set(TEST_SOURCES test_basic.c test_detail.c test_skipdata.c test_iter.c)
@@ -654,6 +655,24 @@ if(CAPSTONE_HPPA_SUPPORT)
     set(TEST_SOURCES ${TEST_SOURCES} test_hppa.c)
 endif()
 
+if(CAPSTONE_E2K_SUPPORT)
+    add_definitions(-DCAPSTONE_HAS_E2K)
+    set(SOURCES_E2K
+        arch/E2K/E2KDisassembler.c
+        arch/E2K/E2KInstPrinter.c
+        arch/E2K/E2KMapping.c
+        arch/E2K/E2KModule.c
+    )
+    set(HEADERS_E2K
+        arch/E2K/E2KConstants.h
+        arch/E2K/E2KDisassembler.h
+        arch/E2K/E2KInstPrinter.h
+        arch/E2K/E2KMapping.h
+        arch/E2K/E2KModule.h
+    )
+    set(TEST_SOURCES ${TEST_SOURCES} test_e2k.c)
+endif()
+
 if (CAPSTONE_OSXKERNEL_SUPPORT)
     add_definitions(-DCAPSTONE_HAS_OSXKERNEL)
 endif()
@@ -680,6 +699,7 @@ set(ALL_SOURCES
     ${SOURCES_TRICORE}
     ${SOURCES_ALPHA}
     ${SOURCES_HPPA}
+    ${SOURCES_E2K}
 )
 
 set(ALL_HEADERS
@@ -705,6 +725,7 @@ set(ALL_HEADERS
     ${HEADERS_TRICORE}
     ${HEADERS_ALPHA}
     ${HEADERS_HPPA}
+    ${HEADERS_E2K}
 )
 
 ## properties
@@ -770,6 +791,7 @@ source_group("Source\\SH" FILES ${SOURCES_SH})
 source_group("Source\\TriCore" FILES ${SOURCES_TRICORE})
 source_group("Source\\Alpha" FILES ${SOURCES_ALPHA})
 source_group("Source\\HPPA" FILES ${SOURCES_HPPA})
+source_group("Source\\E2K" FILES ${SOURCES_E2K})
 
 source_group("Include\\Common" FILES ${HEADERS_COMMON})
 source_group("Include\\Engine" FILES ${HEADERS_ENGINE})
@@ -793,6 +815,7 @@ source_group("Include\\SH" FILES ${HEADERS_SH})
 source_group("Include\\TriCore" FILES ${HEADERS_TRICORE})
 source_group("Include\\Alpha" FILES ${HEADERS_ALPHA})
 source_group("Include\\HPPA" FILES ${HEADERS_HPPA})
+source_group("Include\\E2K" FILES ${HEADERS_E2K})
 
 ## installation
 if(CAPSTONE_INSTALL)

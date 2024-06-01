@@ -63,6 +63,9 @@ case $1 in
   HPPA)
     ARCH=HPPA
     ;;
+  E2K)
+    ARCH=E2K
+    ;;
   *)
     ;;
 esac

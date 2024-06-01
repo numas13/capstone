@@ -145,6 +145,10 @@ ifneq (,$(findstring hppa,$(CAPSTONE_ARCHS)))
 CFLAGS += -DCAPSTONE_HAS_HPPA
 SOURCES += test_hppa.c
 endif
+ifneq (,$(findstring e2k,$(CAPSTONE_ARCHS)))
+CFLAGS += -DCAPSTONE_HAS_E2K
+SOURCES += test_e2k.c
+endif
 
 
 OBJS = $(addprefix $(OBJDIR)/,$(SOURCES:.c=.o))

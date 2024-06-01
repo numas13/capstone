@@ -158,6 +158,7 @@ typedef enum cs_arch {
 	CS_ARCH_TRICORE,	///< TriCore architecture
 	CS_ARCH_ALPHA, 		///< Alpha architecture
 	CS_ARCH_HPPA, 		///< HPPA architecture
+	CS_ARCH_E2K, 		///< E2K architecture
 	CS_ARCH_MAX,
 	CS_ARCH_ALL = 0xFFFF, // All architectures - for cs_support()
 } cs_arch;
@@ -240,6 +241,9 @@ typedef enum cs_mode {
 	CS_MODE_HPPA_11 = 1 << 1, ///< HPPA 1.1
 	CS_MODE_HPPA_20 = 1 << 2, ///< HPPA 2.0
 	CS_MODE_HPPA_20W = CS_MODE_HPPA_20 | (1 << 3), ///< HPPA 2.0 wide
+	CS_MODE_E2K32 = 1 << 1,		///< E2K32 ISA
+	CS_MODE_E2K64 = 1 << 2,		///< E2K64 ISA
+	CS_MODE_E2K64_PM = 1 << 3,	///< E2K64 (Protected Mode) ISA
 } cs_mode;
 
 typedef void* (CAPSTONE_API *cs_malloc_t)(size_t size);
@@ -387,6 +391,7 @@ typedef struct cs_opt_skipdata {
 #include "tricore.h"
 #include "alpha.h"
 #include "hppa.h"
+#include "e2k.h"
 
 #define MAX_IMPL_W_REGS 47
 #define MAX_IMPL_R_REGS 20
@@ -437,6 +442,7 @@ typedef struct cs_detail {
 		cs_tricore tricore; ///< TriCore architecture
 		cs_alpha alpha; ///< Alpha architecture
 		cs_hppa hppa; ///< HPPA architecture
+		cs_e2k e2k; ///< E2K architecture
 	};
 } cs_detail;
 
@@ -495,11 +501,23 @@ typedef struct cs_insn {
 
 	/// Ascii text of instruction mnemonic
 	/// This information is available even when CS_OPT_DETAIL = CS_OPT_OFF
+	///
+	/// Special cases for VLIW:
+	///  "{" - bundle start
+	///  "}" - bundle end
 	char mnemonic[CS_MNEMONIC_SIZE];
 
-	/// Ascii text of instruction operands
-	/// This information is available even when CS_OPT_DETAIL = CS_OPT_OFF
-	char op_str[160];
+	union {
+		/// Ascii text of instruction operands
+		/// This information is available even when CS_OPT_DETAIL = CS_OPT_OFF
+		char op_str[160];
+
+		/// Machine bytes of this bundle, with number of bytes indicated by @size above
+		/// This information is available even when CS_OPT_DETAIL = CS_OPT_OFF
+		///
+		/// This field can be accessed only if mnemonic equals to "{"
+		char bundle[160];
+	};
 
 	/// Pointer to cs_detail.
 	/// NOTE: detail pointer is only valid when both requirements below are met:
